@@ -1,0 +1,118 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jun 13 10:28:00 2018
+
+@author: user
+"""
+import sqlite3
+import sys
+
+def List():
+    print("List :")
+    statement="SELECT id,topic,level,question,answer FROM data;"
+    try:
+        
+        cursor.execute(statement)
+        records=cursor.fetchall()
+        for rec in records:
+            print(rec[0] ," : ",rec[1]," : ",rec[2]," : ",rec[3]," : ",rec[4])
+        if len(records)==0:
+            print("empty list!!No task!")
+        connection.commit()
+    except (sqlite3.Error):
+        print("Error ")
+    
+def add(param):
+    print("...............adding task..............")
+    try:
+        cursor.execute("SELECT id FROM data")
+        ID=len(cursor.fetchall())+1
+        topic=param[0]
+        level=param[1]
+        pos=0
+        c=" "
+        for a in param[2:]:
+            c=c+" "+ str(a)
+            if(str(a).find('?')!=-1):
+                pos=param.index(a)
+                break
+        ques=c
+        ans=param[pos+1:]
+        cursor.execute("INSERT INTO data VALUES(?,?,?,?,?)",(ID,topic,level,ques,ans))
+        print("after execute")
+        connection.commit()
+    except (sqlite3.Error):
+        print("Error")
+    print("...............Successfully added task..............")
+def update(param):
+    print("...........performing completion..............")
+    try:
+        topic=param[1]
+        level=param[2]
+        pos=0
+        c=" "
+        for a in param[3:]:
+            c=c+" "+ str(a)
+            if(str(a).find('?')!=-1):
+                pos=param.index(a)
+                break
+        ques=c
+        ans=param[pos+1:]
+        cursor.execute("UPDATE data set topic=(?), level=(?), question=(?), answer=(?) WHERE id = (?)",(topic,level,ques,ans,param))
+        connection.commit()
+        if (cursor.rowcount==0):
+            print("Incorrect id")
+    except (sqlite3.Error):
+        print("Error ")
+    print("...............Successfully updated status to complete............")
+        
+
+def delete(param):
+    print("...........performing deletion of task.............")
+    try:    
+        cursor.execute("DELETE FROM data WHERE ID=(?)",(param))
+        cursor.execute("UPDATE data SET id=id-1 WHERE id >(?)",(param))
+        connection.commit()
+    except (sqlite3.Error):
+        print("Error ")
+    print("..............Successfully deleted task............")
+    
+    
+def main():
+    global connection
+    global cursor
+    try:
+        connection=sqlite3.connect(r"C:\Users\user\data.db")
+        cursor=connection.cursor()
+    except (sqlite3.Error):
+        print("connection not possible")
+        
+    if len(sys.argv)==1:
+       print("Usage is: list | add | complete | delete")
+       sys.exit(0)
+    carg= sys.argv[1]
+    
+    if carg=="list":
+        List()
+    elif carg=="add":
+        if len(sys.argv)<3:
+            print("Type the task")
+            sys.exit(0)
+        add(sys.argv[2:])
+    elif carg=="update":
+        if len(sys.argv)<3:
+            print("type id to mark as complete")
+            sys.exit(0)
+        update(sys.argv[2:])
+    elif carg=="delete":
+        if len(sys.argv)<3:
+            print("type id to delete the task")
+            sys.exit(0)
+        delete(sys.argv[2:])
+    else:
+        print("type recognizable command")
+    connection.close()
+            
+if __name__=="__main__":
+    main()
+    
